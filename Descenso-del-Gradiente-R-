@@ -1,0 +1,146 @@
+# ============================================
+#  DESCENSO DEL GRADIENTE EN R
+# ============================================
+
+# -------------------------------------------------
+# Ejercicio 1: Minimización de una función cuadrática
+# -------------------------------------------------
+ejercicio_1 <- function() {
+  g <- function(x) (x - 5)^2
+  dg_dx <- function(x) 2 * (x - 5)
+  
+  x_values <- c(10)  # Punto inicial
+  eta <- 0.2
+  iterations <- 5
+  
+  for (i in 1:iterations) {
+    x_next <- x_values[length(x_values)] - eta * dg_dx(x_values[length(x_values)])
+    x_values <- c(x_values, x_next)
+  }
+  
+  g_values <- sapply(x_values, g)
+  
+  plot(0:iterations, g_values, type="o", col="blue", pch=16,
+       main="Ejercicio 1: Minimización de g(x)",
+       xlab="Iteración", ylab="g(x)", lwd=2)
+  grid()
+}
+
+# -------------------------------------------------
+# Ejercicio 2: Ajuste de una recta con Descenso del Gradiente
+# -------------------------------------------------
+ejercicio_2 <- function() {
+  x_i <- c(1, 2, 3, 4, 5)
+  y_i <- c(2, 2.8, 3.6, 4.5, 5.1)
+  eta <- 0.01
+  iterations <- 3
+  
+  beta_0 <- 0
+  beta_1 <- 0
+  costs <- c()
+  
+  for (i in 1:iterations) {
+    errors <- y_i - (beta_0 + beta_1 * x_i)
+    grad_beta_0 <- -2 * mean(errors)
+    grad_beta_1 <- -2 * mean(errors * x_i)
+    
+    beta_0 <- beta_0 - eta * grad_beta_0
+    beta_1 <- beta_1 - eta * grad_beta_1
+    
+    cost <- mean(errors^2)
+    costs <- c(costs, cost)
+  }
+  
+  plot(1:iterations, costs, type="o", col="red", pch=16,
+       main="Ejercicio 2: Reducción de Costo",
+       xlab="Iteración", ylab="Costo", lwd=2)
+  grid()
+}
+
+# -------------------------------------------------
+# Ejercicio 3: Clasificación Logística con Descenso del Gradiente
+# -------------------------------------------------
+ejercicio_3 <- function() {
+  data <- matrix(c(0.5, 1.0, 0, 1.5, 2.0, 0, 2.0, 2.5, 1, 3.0, 3.5, 1), 
+                 ncol=3, byrow=TRUE)
+  x <- data[,1:2]
+  y <- data[,3]
+  eta <- 0.1
+  iterations <- 3
+  
+  w <- c(0, 0, 0)
+  costs <- c()
+  
+  sigmoid <- function(z) 1 / (1 + exp(-z))
+  
+  for (i in 1:iterations) {
+    z <- w[1] + x %*% w[2:3]
+    predictions <- sigmoid(z)
+    errors <- predictions - y
+    
+    grad_w0 <- mean(errors)
+    grad_w1 <- mean(errors * x[,1])
+    grad_w2 <- mean(errors * x[,2])
+    
+    w[1] <- w[1] - eta * grad_w0
+    w[2] <- w[2] - eta * grad_w1
+    w[3] <- w[3] - eta * grad_w2
+    
+    cost <- -mean(y * log(predictions + 1e-8) + (1 - y) * log(1 - predictions + 1e-8))
+    costs <- c(costs, cost)
+  }
+  
+  plot(1:iterations, costs, type="o", col="green", pch=16,
+       main="Ejercicio 3: Reducción de Costo Logístico",
+       xlab="Iteración", ylab="Costo", lwd=2)
+  grid()
+}
+
+# -------------------------------------------------
+# Ejercicio 4: Descenso Estocástico en Minibatches
+# -------------------------------------------------
+ejercicio_4 <- function() {
+  set.seed(42)
+  x_data <- matrix(runif(3000), ncol=3)
+  y_data <- x_data %*% c(3, -2, 1) + rnorm(1000, mean=0, sd=0.1)
+  
+  batch_size <- 50
+  eta <- 0.01
+  w <- c(0, 0, 0)
+  iterations <- 3
+  costs <- c()
+  
+  for (iter in 1:iterations) {
+    for (i in seq(1, nrow(x_data), by=batch_size)) {
+      batch_x <- x_data[i:min(i+batch_size-1, nrow(x_data)), ]
+      batch_y <- y_data[i:min(i+batch_size-1, length(y_data))]
+      
+      predictions <- batch_x %*% w
+      errors <- predictions - batch_y
+      
+      grad_w <- (2 / batch_size) * t(batch_x) %*% errors
+      w <- w - eta * grad_w
+    }
+    
+    cost <- mean((x_data %*% w - y_data)^2)
+    costs <- c(costs, cost)
+  }
+  
+  plot(1:iterations, costs, type="o", col="purple", pch=16,
+       main="Ejercicio 4: Reducción de Costo en Minibatches",
+       xlab="Iteración", ylab="Costo", lwd=2)
+  grid()
+}
+
+# -------------------------------------------------
+# Ejecutar todos los ejercicios
+# -------------------------------------------------
+ejecutar_todos <- function() {
+  ejercicio_1()
+  ejercicio_2()
+  ejercicio_3()
+  ejercicio_4()
+}
+
+# Ejecutar todo
+ejecutar_todos()
