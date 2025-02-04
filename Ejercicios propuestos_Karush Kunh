@@ -1,0 +1,119 @@
+import cvxpy as cp
+import numpy as np
+
+def ejercicio_1():
+    """
+    Ejercicio 1: Minimización con una restricción lineal.
+    """
+    x1 = cp.Variable()
+    x2 = cp.Variable()
+
+    # Función objetivo: f(x1, x2) = x1^2 + 2*x2^2
+    objective = cp.Minimize(x1**2 + 2*x2**2)
+
+    # Restricción: x1 + 2*x2 - 3 <= 0
+    constraints = [x1 + 2*x2 - 3 <= 0]
+
+    # Resolver el problema
+    problem = cp.Problem(objective, constraints)
+    problem.solve()
+
+    lambda_value = constraints[0].dual_value
+
+    print("\nEjercicio 1 - Solución óptima:")
+    print("x1 =", x1.value)
+    print("x2 =", x2.value)
+    print("Valor óptimo de la función objetivo =", problem.value)
+    print("Multiplicador de Lagrange (lambda) =", lambda_value)
+
+def ejercicio_2():
+    """
+    Ejercicio 2: Minimización con dos restricciones (lineal y no negatividad).
+    """
+    x1 = cp.Variable()
+    x2 = cp.Variable()
+
+    # Función objetivo: f(x1, x2) = x1^2 + x2^2
+    objective = cp.Minimize(x1**2 + x2**2)
+
+    # Restricciones
+    constraints = [x1 + x2 - 2 <= 0, x1 >= 0]
+
+    # Resolver el problema
+    problem = cp.Problem(objective, constraints)
+    problem.solve()
+
+    lambda1 = constraints[0].dual_value
+    lambda2 = constraints[1].dual_value
+
+    print("\nEjercicio 2 - Solución óptima:")
+    print("x1 =", x1.value)
+    print("x2 =", x2.value)
+    print("Valor óptimo de la función objetivo =", problem.value)
+    print("Multiplicador (dual) para x1+x2-2 <= 0:", lambda1)
+    print("Multiplicador (dual) para x1 >= 0:", lambda2)
+
+def ejercicio_3():
+    """
+    Ejercicio 3: Maximización con restricción cuadrática.
+    """
+    x1 = cp.Variable()
+    x2 = cp.Variable()
+
+    # Función objetivo: Maximizar f(x) = 3x1 + 4x2
+    objective = cp.Maximize(3*x1 + 4*x2)
+
+    # Restricciones
+    constraints = [x1**2 + x2**2 <= 9, x1 >= 0, x2 >= 0]
+
+    # Resolver el problema
+    problem = cp.Problem(objective, constraints)
+    problem.solve()
+
+    lambda1 = constraints[0].dual_value
+    lambda2 = constraints[1].dual_value
+    lambda3 = constraints[2].dual_value
+
+    print("\nEjercicio 3 - Solución óptima:")
+    print("x1 =", x1.value)
+    print("x2 =", x2.value)
+    print("Valor óptimo de la función objetivo =", problem.value)
+    print("Multiplicador (dual) para x1^2+x2^2<=9:", lambda1)
+    print("Multiplicador (dual) para x1>=0:", lambda2)
+    print("Multiplicador (dual) para x2>=0:", lambda3)
+
+def ejercicio_4():
+    """
+    Ejercicio 4: Optimización cuadrática con restricciones lineales.
+    """
+    Q = np.array([[2, 0], [0, 2]])
+    c = np.array([-2, -5])
+    A = np.array([[1, 1]])
+    b = np.array([1])
+
+    # Variable de decisión
+    x = cp.Variable(2)
+
+    # Función objetivo
+    objective = cp.Minimize(0.5 * cp.quad_form(x, Q) + c.T @ x)
+
+    # Restricción
+    constraints = [A @ x <= b]
+
+    # Resolver el problema
+    problem = cp.Problem(objective, constraints)
+    problem.solve()
+
+    lambda_val = constraints[0].dual_value
+
+    print("\nEjercicio 4 - Solución del problema convexo:")
+    print("x =", x.value)
+    print("Valor óptimo (primal) =", problem.value)
+    print("Valor del multiplicador dual (lambda) =", lambda_val)
+
+if __name__ == "__main__":
+    print("\n=== Resolviendo todos los ejercicios ===")
+    ejercicio_1()
+    ejercicio_2()
+    ejercicio_3()
+    ejercicio_4()
