@@ -1,23 +1,7 @@
 import streamlit as st
 import folium
-from streamlit_folium import st_folium
 from geopy.distance import geodesic
-
-# Función para crear un mapa con folium
-def create_map(start_coords, end_coords):
-    # Crear un mapa centrado en el punto de inicio
-    m = folium.Map(location=start_coords, zoom_start=6)
-    
-    # Agregar marcador en el punto de inicio
-    folium.Marker(location=start_coords, popup="Punto de inicio").add_to(m)
-    
-    # Agregar marcador en el punto de destino
-    folium.Marker(location=end_coords, popup="Punto de destino").add_to(m)
-    
-    # Crear una línea de ruta entre los puntos de inicio y destino
-    folium.PolyLine([start_coords, end_coords], color="blue", weight=2.5, opacity=1).add_to(m)
-    
-    return m
+from streamlit_folium import st_folium
 
 # Título y descripción de la aplicación
 st.title("Optimización de Rutas y Consumo de Gasolina 🚗")
@@ -30,7 +14,7 @@ st.markdown("""
 start_city = st.selectbox('Selecciona el punto de inicio', ['Ciudad A', 'Ciudad B'])
 end_city = st.selectbox('Selecciona el destino', ['Ciudad A', 'Ciudad B'])
 
-# Definir las coordenadas de las ciudades
+# Coordenadas de las ciudades
 if start_city == 'Ciudad A' and end_city == 'Ciudad B':
     start_coords = [19.432608, -99.133209]  # Ciudad de México
     end_coords = [20.659698, -103.349609]  # Guadalajara
@@ -43,10 +27,18 @@ vehicle_speed = st.slider('Velocidad promedio del vehículo (km/h)', 40, 120, 10
 tank_capacity = st.slider('Capacidad del tanque de gasolina (litros)', 20, 100, 50)
 fuel_consumption = st.slider('Consumo de gasolina (litros/km)', 0.05, 0.20, 0.10)
 
+# Función para crear el mapa con folium
+def create_map(start_coords, end_coords):
+    m = folium.Map(location=start_coords, zoom_start=6)
+    folium.Marker(location=start_coords, popup="Punto de inicio").add_to(m)
+    folium.Marker(location=end_coords, popup="Punto de destino").add_to(m)
+    folium.PolyLine([start_coords, end_coords], color="blue", weight=2.5, opacity=1).add_to(m)
+    return m
+
 # Crear el mapa
 m = create_map(start_coords, end_coords)
 
-# Mostrar el mapa interactivo en Streamlit
+# Mostrar el mapa en Streamlit usando st_folium
 st_folium(m, width=700)
 
 # Calcular la distancia entre los puntos
@@ -60,5 +52,3 @@ st.write(f"**Tiempo estimado de llegada:** {travel_time:.2f} horas")
 # Calcular el consumo de gasolina
 total_fuel = distance * fuel_consumption
 st.write(f"**Consumo estimado de gasolina:** {total_fuel:.2f} litros")
-
-
