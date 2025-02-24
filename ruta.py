@@ -83,15 +83,18 @@ if 'puntos' not in st.session_state:
 mapa_html = mapa._repr_html_()
 components.html(mapa_html, height=600)
 
-# Guardar los puntos y ejecutar la optimización
-if len(st.session_state['puntos']) > 1:
-    ruta, tiempo, consumo, distancia = calcular_ruta_optima(grafo, 'Ciudad A', 'Ciudad B', velocidad_promedio, consumo_gasolina)
-    st.subheader(f"Ruta más eficiente:")
-    st.write(f"Ruta: {' -> '.join(ruta)}")
-    st.write(f"Distancia total: {distancia} km")
-    st.write(f"Tiempo estimado de llegada: {tiempo} horas")
-    st.write(f"Consumo total de gasolina: {consumo:.2f} litros")
-    
-    mapa_ruta = mostrar_mapa(st.session_state['puntos'], coordenadas)
-    mapa_html = mapa_ruta._repr_html_()
-    components.html(mapa_html, height=600)
+# Agregar un botón para optimizar
+if st.button('Optimizar Ruta'):
+    if len(st.session_state['puntos']) > 1:
+        ruta, tiempo, consumo, distancia = calcular_ruta_optima(grafo, 'Ciudad A', 'Ciudad B', velocidad_promedio, consumo_gasolina)
+        st.subheader(f"Ruta más eficiente:")
+        st.write(f"Ruta: {' -> '.join(ruta)}")
+        st.write(f"Distancia total: {distancia} km")
+        st.write(f"Tiempo estimado de llegada: {tiempo} horas")
+        st.write(f"Consumo total de gasolina: {consumo:.2f} litros")
+        
+        mapa_ruta = mostrar_mapa(st.session_state['puntos'], coordenadas)
+        mapa_html = mapa_ruta._repr_html_()
+        components.html(mapa_html, height=600)
+    else:
+        st.error("Por favor, agregue al menos dos puntos en el mapa para calcular la ruta.")
