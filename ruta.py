@@ -1,13 +1,8 @@
 import streamlit as st
 import folium
-from folium import plugins
 from streamlit_folium import st_folium
 
-# Inicializa la lista de puntos si no existe
-if 'puntos' not in st.session_state:
-    st.session_state['puntos'] = []
-
-# Titulo
+# Título
 st.title('Optimización de Rutas y Consumo de Gasolina 🚗')
 
 # Parámetros del vehículo y ruta
@@ -15,36 +10,36 @@ velocidad_promedio = st.slider('Velocidad promedio del vehículo (km/h)', 40, 12
 capacidad_tanque = st.slider('Capacidad del tanque de gasolina (litros)', 20, 100, 50)
 consumo_gasolina = st.slider('Consumo de gasolina (litros/km)', 0.05, 0.20, 0.10)
 
-# Map
+# Mapa interactivo inicial
 m = folium.Map(location=[20.659, -103.349], zoom_start=6)
 
-# Función para agregar puntos en el mapa
+# Función para agregar puntos
 def agregar_punto(lat, lon):
-    st.session_state['puntos'].append((lat, lon))
     folium.Marker([lat, lon], popup=f"Lat: {lat}, Lon: {lon}").add_to(m)
 
-# Mapa para que el usuario agregue puntos
+# Muestra el mapa interactivo y permite al usuario agregar puntos
 st.subheader('Haz clic en el mapa para agregar puntos')
-clicked = st_folium(m, width=700)
 
-if clicked:
-    lat, lon = clicked["lat"], clicked["lng"]
-    agregar_punto(lat, lon)
+# Mostrar el mapa interactivo de Folium
+mapa_interactivo = st_folium(m, width=700, height=500)
 
-# Mostrar puntos agregados
-st.write(f'Puntos agregados: {len(st.session_state["puntos"])}')
-for i, punto in enumerate(st.session_state['puntos']):
-    st.write(f'{i+1}. Lat: {punto[0]}, Lon: {punto[1]}')
+# Si el mapa tiene puntos, se mostrarán las coordenadas
+if mapa_interactivo:
+    # Obtener la coordenada del clic
+    lat = mapa_interactivo.get("last_click", {}).get("lat")
+    lon = mapa_interactivo.get("last_click", {}).get("lon")
+    
+    if lat and lon:
+        agregar_punto(lat, lon)
+        st.write(f"Se ha agregado un punto en: Lat: {lat}, Lon: {lon}")
 
-# Si se tienen al menos dos puntos, mostrar el botón para optimizar la ruta
-if len(st.session_state['puntos']) >= 2:
-    if st.button('Optimizar Ruta'):
-        st.write('Optimización en proceso...')
-        # Aquí puedes agregar el código para optimizar la ruta
-        # Por ejemplo, usando una API para el cálculo de rutas más eficientes
-        # Deberías implementar la lógica de optimización aquí.
-        st.write('Ruta optimizada con éxito!')
-else:
-    st.warning("Por favor, agrega al menos dos puntos en el mapa para optimizar la ruta.")
+# Mostrar los parámetros de la ruta
+st.write(f"Velocidad promedio del vehículo: {velocidad_promedio} km/h")
+st.write(f"Capacidad del tanque de gasolina: {capacidad_tanque} litros")
+st.write(f"Consumo de gasolina: {consumo_gasolina} litros/km")
 
-
+# Lógica para optimizar la ruta (puedes agregar tu lógica aquí)
+if st.button('Optimizar Ruta'):
+    st.write('Optimización en proceso...')
+    # Agregar aquí el código para calcular la ruta optimizada, si es necesario
+    st.write('Ruta optimizada con éxito!')
