@@ -1,8 +1,6 @@
 import streamlit as st
 import folium
 from folium import plugins
-import networkx as nx
-import numpy as np
 import streamlit.components.v1 as components
 
 # Configuración de la página
@@ -61,77 +59,39 @@ st.markdown('<div class="title">Optimización de Rutas y Consumo de Gasolina �
 
 # Configuración de la optimización
 st.sidebar.header("Parámetros del Vehículo y Ruta")
+velocidad_promedio = st.sidebar.slider('Velocidad promedio del vehículo (km/h)', 40, 120, 80)
+capacidad_tanque = st.sidebar.slider('Capacidad del tanque de gasolina (litros)', 20, 100, 50)
+consumo_gasolina = st.sidebar.slider('Consumo de gasolina (litros/km)', 0.05, 0.2, 0.1)
+
+# Inicializar lista de puntos (coordenadas)
 puntos_seleccionados = []
-num_puntos = st.sidebar.number_input('Número de puntos a seleccionar', min_value=1, max_value=5, value=2)
 
-# Recolectar las coordenadas de los puntos
-for i in range(num_puntos):
-    nombre_punto = st.sidebar.text_input(f'Nombre del punto {i+1}', f'Ciudad {i+1}')
-    latitud = st.sidebar.number_input(f'Latitud del punto {i+1}', -90.0, 90.0, 0.0)
-    longitud = st.sidebar.number_input(f'Longitud del punto {i+1}', -180.0, 180.0, 0.0)
-    if nombre_punto and latitud and longitud:
-        puntos_seleccionados.append((nombre_punto, [latitud, longitud]))
+# Crear mapa interactivo donde el usuario puede marcar puntos
+mapa = folium.Map(location=[-12.0464, -77.0428], zoom_start=6)  # Coordenadas de inicio (ejemplo de Perú)
 
-# Definir el grafo de rutas (distancia en km y tiempo estimado en horas)
-grafo = nx.Graph()
+# Usar el plugin Draw de Folium para permitir que el usuario dibuje en el mapa
+draw = plugins.Draw(export=True)
+draw.add_to(mapa)
 
-# Función para calcular la mejor ruta optimizada
-def calcular_ruta_optima(grafo, inicio, destino, velocidad, consumo_gasolina):
-    # Calcular la mejor ruta usando Dijkstra (considerando distancia como métrica)
-    ruta = nx.dijkstra_path(grafo, source=inicio, target=destino, weight='distance')
-    
-    # Calcular el tiempo total y el consumo de gasolina total de la ruta
-    distancia_total = 0
-    tiempo_total = 0
-    consumo_total = 0
+# Convertir el mapa a HTML y mostrar en Streamlit
+mapa_html = mapa._repr_html_()
+components.html(mapa_html, height=600)
 
-    for i in range(len(ruta) - 1):
-        distancia = grafo[ruta[i]][ruta[i + 1]]['distance']
-        tiempo = grafo[ruta[i]][ruta[i + 1]]['time']
-        
-        # Acumulamos los resultados
-        distancia_total += distancia
-        tiempo_total += tiempo
-        consumo_total += distancia * consumo_gasolina  # Litros por km
-    
-    tiempo_llegada = tiempo_total  # Tiempo total de la ruta
-    consumo_total_gasolina = consumo_total  # Consumo total de gasolina
+# Mostrar mensaje sobre cómo interactuar
+st.markdown("Haz clic en el mapa para agregar puntos. Luego, selecciona el botón para calcular la ruta optimizada.")
 
-    return ruta, tiempo_llegada, consumo_total_gasolina, distancia_total
+# Aquí es donde se manejarían las coordenadas marcadas por el usuario
+# Esto debería ser procesado en el backend una vez que el usuario termine de dibujar los puntos.
+# Para obtener las coordenadas de los puntos, Folium genera un archivo GeoJSON cuando el usuario dibuja.
 
-# Función para crear el mapa con las rutas
-def mostrar_mapa(ruta, coordenadas):
-    # Crear el mapa centrado en el primer punto seleccionado
-    mapa = folium.Map(location=coordenadas[0][1], zoom_start=6)
-
-    # Agregar los puntos de las ciudades
-    for ciudad, coord in coordenadas:
-        folium.Marker(location=coord, popup=ciudad, icon=folium.Icon(color="blue")).add_to(mapa)
-    
-    # Trazar las rutas entre las ciudades
-    for i in range(len(ruta) - 1):
-        ciudad_inicio = ruta[i]
-        ciudad_fin = ruta[i + 1]
-        folium.PolyLine(locations=[coordenadas[ciudad_inicio], coordenadas[ciudad_fin]],
-                        color='blue', weight=3, opacity=0.7).add_to(mapa)
-    
-    return mapa
-
-# Botón para ejecutar la optimización de la ruta
 if st.sidebar.button("Ejecutar Optimización"):
-    # Calcular la mejor ruta
-    ruta, tiempo, consumo, distancia = calcular_ruta_optima(grafo, inicio, destino, velocidad_promedio, consumo_gasolina)
-    
-    # Mostrar los resultados
-    st.subheader(f"Ruta más eficiente desde {inicio} hasta {destino}:")
-    st.write(f"Ruta: {' -> '.join(ruta)}")
-    st.write(f"Distancia total: {distancia} km")
-    st.write(f"Tiempo estimado de llegada: {tiempo} horas")
-    st.write(f"Consumo total de gasolina: {consumo:.2f} litros")
-    
-    # Mostrar el mapa interactivo
-    mapa_ruta = mostrar_mapa(ruta, puntos_seleccionados)
-    
-    # Convertir el mapa a HTML y mostrar en Streamlit
-    mapa_html = mapa_ruta._repr_html_()  # Convertir el mapa en HTML
-    components.html(mapa_html, height=600)  # Incrustar el mapa en la app
+    if len(puntos_seleccionados) < 2:
+        st.warning("Por favor, agrega al menos dos puntos en el mapa para optimizar la ruta.")
+    else:
+        # Aquí se implementaría la lógica para calcular la ruta con base en los puntos seleccionados
+        st.write("Calculando la mejor ruta...")
+        # Mostrar detalles de la ruta calculada (esto debería llamarse a la lógica que ya tenías de optimización de rutas)
+        # Ejemplo:
+        # ruta, tiempo, consumo, distancia = calcular_ruta_optima(...)
+
+# Añadir lógica para extraer las coordenadas de los puntos seleccionados después de interactuar
