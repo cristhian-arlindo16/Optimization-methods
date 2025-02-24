@@ -3,6 +3,7 @@ import folium
 from folium import plugins
 import networkx as nx
 import numpy as np
+import streamlit.components.v1 as components
 
 # Configuración de la página
 st.set_page_config(page_title="Optimización de Rutas y Consumo de Gasolina", page_icon="🚗", layout="wide")
@@ -139,5 +140,7 @@ if st.sidebar.button("Ejecutar Optimización"):
     
     # Mostrar el mapa interactivo
     mapa_ruta = mostrar_mapa(ruta, coordenadas)
-    st.subheader("Ruta optimizada en el mapa:")
-    st.write(mapa_ruta)
+    
+    # Convertir el mapa a HTML y mostrar en Streamlit
+    mapa_html = mapa_ruta._repr_html_()  # Convertir el mapa en HTML
+    components.html(mapa_html, height=600)  # Incrustar el mapa en la app
