@@ -4,3 +4,7 @@ pandas
 matplotlib
 simpy
 deap
+folium
+streamlit
+networkx
+numpy
