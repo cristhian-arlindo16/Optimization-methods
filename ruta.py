@@ -61,28 +61,19 @@ st.markdown('<div class="title">Optimización de Rutas y Consumo de Gasolina �
 
 # Configuración de la optimización
 st.sidebar.header("Parámetros del Vehículo y Ruta")
-inicio = st.sidebar.selectbox('Selecciona el punto de inicio', ['Ciudad A', 'Ciudad B', 'Ciudad C', 'Ciudad D'])
-destino = st.sidebar.selectbox('Selecciona el destino', ['Ciudad A', 'Ciudad B', 'Ciudad C', 'Ciudad D'])
-velocidad_promedio = st.sidebar.slider('Velocidad promedio del vehículo (km/h)', 40, 120, 80)
-capacidad_tanque = st.sidebar.slider('Capacidad del tanque de gasolina (litros)', 20, 100, 50)
-consumo_gasolina = st.sidebar.slider('Consumo de gasolina (litros/km)', 0.05, 0.2, 0.1)
+puntos_seleccionados = []
+num_puntos = st.sidebar.number_input('Número de puntos a seleccionar', min_value=1, max_value=5, value=2)
 
-# Definir las coordenadas geográficas de las ciudades (latitud, longitud)
-coordenadas = {
-    'Ciudad A': [19.4326, -99.1332],  # Ejemplo: Ciudad A (CDMX)
-    'Ciudad B': [19.0810, -98.1980],  # Ejemplo: Ciudad B
-    'Ciudad C': [19.5047, -98.7073],  # Ejemplo: Ciudad C
-    'Ciudad D': [19.3202, -99.7111],  # Ejemplo: Ciudad D
-}
+# Recolectar las coordenadas de los puntos
+for i in range(num_puntos):
+    nombre_punto = st.sidebar.text_input(f'Nombre del punto {i+1}', f'Ciudad {i+1}')
+    latitud = st.sidebar.number_input(f'Latitud del punto {i+1}', -90.0, 90.0, 0.0)
+    longitud = st.sidebar.number_input(f'Longitud del punto {i+1}', -180.0, 180.0, 0.0)
+    if nombre_punto and latitud and longitud:
+        puntos_seleccionados.append((nombre_punto, [latitud, longitud]))
 
 # Definir el grafo de rutas (distancia en km y tiempo estimado en horas)
 grafo = nx.Graph()
-
-# Agregar las rutas y distancias entre las ciudades (en km y horas)
-grafo.add_edge('Ciudad A', 'Ciudad B', distance=150, time=2)  
-grafo.add_edge('Ciudad A', 'Ciudad C', distance=200, time=3)  
-grafo.add_edge('Ciudad B', 'Ciudad D', distance=120, time=1.5)  
-grafo.add_edge('Ciudad C', 'Ciudad D', distance=180, time=2.5)  
 
 # Función para calcular la mejor ruta optimizada
 def calcular_ruta_optima(grafo, inicio, destino, velocidad, consumo_gasolina):
@@ -110,11 +101,11 @@ def calcular_ruta_optima(grafo, inicio, destino, velocidad, consumo_gasolina):
 
 # Función para crear el mapa con las rutas
 def mostrar_mapa(ruta, coordenadas):
-    # Crear el mapa centrado en la primera ciudad (inicio)
-    mapa = folium.Map(location=coordenadas[ruta[0]], zoom_start=6)
+    # Crear el mapa centrado en el primer punto seleccionado
+    mapa = folium.Map(location=coordenadas[0][1], zoom_start=6)
 
     # Agregar los puntos de las ciudades
-    for ciudad, coord in coordenadas.items():
+    for ciudad, coord in coordenadas:
         folium.Marker(location=coord, popup=ciudad, icon=folium.Icon(color="blue")).add_to(mapa)
     
     # Trazar las rutas entre las ciudades
@@ -139,7 +130,7 @@ if st.sidebar.button("Ejecutar Optimización"):
     st.write(f"Consumo total de gasolina: {consumo:.2f} litros")
     
     # Mostrar el mapa interactivo
-    mapa_ruta = mostrar_mapa(ruta, coordenadas)
+    mapa_ruta = mostrar_mapa(ruta, puntos_seleccionados)
     
     # Convertir el mapa a HTML y mostrar en Streamlit
     mapa_html = mapa_ruta._repr_html_()  # Convertir el mapa en HTML
