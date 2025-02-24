@@ -1,1 +1,12 @@
 googlemaps
+
+streamlit
+numpy
+pandas
+matplotlib
+simpy
+deap
+
+git add .
+git commit -m "Actualización de la app con nuevas funciones"
+git push origin master
