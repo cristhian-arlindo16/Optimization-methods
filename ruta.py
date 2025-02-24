@@ -1,66 +1,64 @@
 import streamlit as st
 import folium
-from folium.plugins import MarkerCluster
-import geopy.distance  # Para calcular la distancia entre dos puntos
+from streamlit_folium import st_folium
+from geopy.distance import geodesic
 
-# Título de la aplicación
-st.title('Optimización de Rutas y Consumo de Gasolina 🚗⛽')
+# Función para crear un mapa con folium
+def create_map(start_coords, end_coords):
+    # Crear un mapa centrado en el punto de inicio
+    m = folium.Map(location=start_coords, zoom_start=6)
+    
+    # Agregar marcador en el punto de inicio
+    folium.Marker(location=start_coords, popup="Punto de inicio").add_to(m)
+    
+    # Agregar marcador en el punto de destino
+    folium.Marker(location=end_coords, popup="Punto de destino").add_to(m)
+    
+    # Crear una línea de ruta entre los puntos de inicio y destino
+    folium.PolyLine([start_coords, end_coords], color="blue", weight=2.5, opacity=1).add_to(m)
+    
+    return m
 
-# Parámetros de entrada
-st.sidebar.header('Parámetros del Vehículo y Ruta')
+# Título y descripción de la aplicación
+st.title("Optimización de Rutas y Consumo de Gasolina 🚗")
+st.markdown("""
+    Esta aplicación muestra la ruta más eficiente entre dos puntos en un mapa, 
+    calcula la distancia y estima el tiempo de llegada dependiendo de los parámetros del vehículo.
+""")
 
-# Selección de puntos de inicio y destino
-ciudad_a = st.sidebar.selectbox('Selecciona el punto de inicio', ['Ciudad A', 'Ciudad B'])
-ciudad_b = st.sidebar.selectbox('Selecciona el destino', ['Ciudad A', 'Ciudad B'])
+# Parámetros del vehículo y ruta
+start_city = st.selectbox('Selecciona el punto de inicio', ['Ciudad A', 'Ciudad B'])
+end_city = st.selectbox('Selecciona el destino', ['Ciudad A', 'Ciudad B'])
 
-# Coordenadas de las ciudades (Ejemplo, puedes cambiarlas con las coordenadas reales)
-coordenadas = {
-    'Ciudad A': [19.4326, -99.1332],  # Coordenadas de Ciudad A
-    'Ciudad B': [20.6597, -103.3496]   # Coordenadas de Ciudad B
-}
+# Definir las coordenadas de las ciudades
+if start_city == 'Ciudad A' and end_city == 'Ciudad B':
+    start_coords = [19.432608, -99.133209]  # Ciudad de México
+    end_coords = [20.659698, -103.349609]  # Guadalajara
+elif start_city == 'Ciudad B' and end_city == 'Ciudad A':
+    start_coords = [20.659698, -103.349609]  # Guadalajara
+    end_coords = [19.432608, -99.133209]  # Ciudad de México
 
-# Velocidad y capacidad del vehículo
-velocidad = st.sidebar.slider('Velocidad promedio del vehículo (km/h)', 40, 120, 100)
-capacidad_tanque = st.sidebar.slider('Capacidad del tanque de gasolina (litros)', 20, 100, 50)
-consumo_gasolina = st.sidebar.slider('Consumo de gasolina (litros/km)', 0.05, 0.20, 0.10)
+# Parámetros del vehículo
+vehicle_speed = st.slider('Velocidad promedio del vehículo (km/h)', 40, 120, 100)
+tank_capacity = st.slider('Capacidad del tanque de gasolina (litros)', 20, 100, 50)
+fuel_consumption = st.slider('Consumo de gasolina (litros/km)', 0.05, 0.20, 0.10)
 
-# Calcular distancia entre las dos ciudades
-start_coords = coordenadas[ciudad_a]
-end_coords = coordenadas[ciudad_b]
-distance = geopy.distance.geodesic(start_coords, end_coords).km
+# Crear el mapa
+m = create_map(start_coords, end_coords)
 
-# Calcular tiempo estimado de viaje
-tiempo_estimado = distance / velocidad  # Tiempo en horas
+# Mostrar el mapa interactivo en Streamlit
+st_folium(m, width=700)
+
+# Calcular la distancia entre los puntos
+distance = geodesic(start_coords, end_coords).km
+st.write(f"**Distancia entre los puntos:** {distance:.2f} km")
+
+# Estimar el tiempo de llegada
+travel_time = distance / vehicle_speed
+st.write(f"**Tiempo estimado de llegada:** {travel_time:.2f} horas")
 
 # Calcular el consumo de gasolina
-consumo_estimado = distance * consumo_gasolina  # Litros de gasolina
+total_fuel = distance * fuel_consumption
+st.write(f"**Consumo estimado de gasolina:** {total_fuel:.2f} litros")
 
-# Crear el mapa centrado en el punto de inicio
-mapa = folium.Map(location=start_coords, zoom_start=7)
 
-# Agregar marcadores para las ciudades de inicio y destino
-folium.Marker(start_coords, popup=f"{ciudad_a} (Inicio)", icon=folium.Icon(color='green')).add_to(mapa)
-folium.Marker(end_coords, popup=f"{ciudad_b} (Destino)", icon=folium.Icon(color='red')).add_to(mapa)
-
-# Dibuja la ruta entre las dos ciudades
-folium.PolyLine([start_coords, end_coords], color="blue", weight=2.5, opacity=1).add_to(mapa)
-
-# Agregar la funcionalidad de "MarkerCluster" para hacer el mapa más dinámico y limpio
-marker_cluster = MarkerCluster().add_to(mapa)
-folium.Marker(start_coords, popup=f"{ciudad_a} (Inicio)").add_to(marker_cluster)
-folium.Marker(end_coords, popup=f"{ciudad_b} (Destino)").add_to(marker_cluster)
-
-# Mostrar el mapa
-st.write(mapa)
-
-# Mostrar los resultados
-st.subheader('Resultados del Viaje')
-
-st.write(f'Distancia entre {ciudad_a} y {ciudad_b}: {distance:.2f} km')
-st.write(f'Tiempo estimado de viaje: {tiempo_estimado:.2f} horas')
-st.write(f'Consumo estimado de gasolina: {consumo_estimado:.2f} litros')
-
-# Botón para ejecutar la optimización
-if st.sidebar.button("Ejecutar Optimización"):
-    st.subheader("Ruta Optima Calculada")
-    st.write(f"La distancia es de {distance:.2f} km, el tiempo estimado es de {tiempo_estimado:.2f} horas y el consumo estimado de gasolina es de {consumo_estimado:.2f} litros.")
