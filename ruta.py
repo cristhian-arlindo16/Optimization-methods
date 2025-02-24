@@ -10,8 +10,8 @@ velocidad_promedio = st.slider('Velocidad promedio del vehículo (km/h)', 40, 12
 capacidad_tanque = st.slider('Capacidad del tanque de gasolina (litros)', 20, 100, 50)
 consumo_gasolina = st.slider('Consumo de gasolina (litros/km)', 0.05, 0.20, 0.10)
 
-# Mapa interactivo inicial
-m = folium.Map(location=[20.659, -103.349], zoom_start=6)
+# Mapa interactivo inicial (coordenadas para el centro de Perú)
+m = folium.Map(location=[-13.1631, -71.8129], zoom_start=6)
 
 # Función para agregar puntos
 def agregar_punto(lat, lon):
