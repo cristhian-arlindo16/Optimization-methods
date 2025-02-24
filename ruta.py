@@ -2,6 +2,7 @@ import streamlit as st
 import folium
 import networkx as nx
 import streamlit.components.v1 as components
+from folium.plugins import Draw
 
 # Configuración de la página
 st.set_page_config(page_title="Optimización de Rutas y Consumo de Gasolina", page_icon="🚗", layout="wide")
@@ -11,21 +12,11 @@ st.markdown('<div style="font-size: 40px; color: #1E88E5; font-weight: bold; tex
 
 # Configuración de la optimización
 st.sidebar.header("Parámetros del Vehículo y Ruta")
-inicio = st.sidebar.selectbox('Selecciona el punto de inicio', ['Ciudad A', 'Ciudad B', 'Ciudad C', 'Ciudad D'])
-destino = st.sidebar.selectbox('Selecciona el destino', ['Ciudad A', 'Ciudad B', 'Ciudad C', 'Ciudad D'])
 velocidad_promedio = st.sidebar.slider('Velocidad promedio del vehículo (km/h)', 40, 120, 80)
 capacidad_tanque = st.sidebar.slider('Capacidad del tanque de gasolina (litros)', 20, 100, 50)
 consumo_gasolina = st.sidebar.slider('Consumo de gasolina (litros/km)', 0.05, 0.2, 0.1)
 
-# Coordenadas de las ciudades (latitud, longitud)
-coordenadas = {
-    'Ciudad A': [19.4326, -99.1332],  # Ciudad A
-    'Ciudad B': [19.0810, -98.1980],  # Ciudad B
-    'Ciudad C': [19.5047, -98.7073],  # Ciudad C
-    'Ciudad D': [19.3202, -99.7111],  # Ciudad D
-}
-
-# Grafo de rutas (distancia en km y tiempo estimado en horas)
+# Grafo de rutas (distancia en km y tiempo estimado en horas) - Deberías agregar más rutas
 grafo = nx.Graph()
 grafo.add_edge('Ciudad A', 'Ciudad B', distance=150, time=2)
 grafo.add_edge('Ciudad A', 'Ciudad C', distance=200, time=3)
@@ -49,25 +40,58 @@ def calcular_ruta_optima(grafo, inicio, destino, velocidad, consumo_gasolina):
     return ruta, tiempo_total, consumo_total, distancia_total
 
 # Función para mostrar el mapa con la ruta
-def mostrar_mapa(ruta, coordenadas):
-    mapa = folium.Map(location=coordenadas[ruta[0]], zoom_start=6)
-    for ciudad, coord in coordenadas.items():
-        folium.Marker(location=coord, popup=ciudad).add_to(mapa)
+def mostrar_mapa(puntos, coordenadas):
+    mapa = folium.Map(location=[19.4326, -99.1332], zoom_start=6)
     
-    for i in range(len(ruta) - 1):
-        folium.PolyLine(locations=[coordenadas[ruta[i]], coordenadas[ruta[i + 1]]], color='blue', weight=3, opacity=0.7).add_to(mapa)
+    # Dibujar los puntos en el mapa
+    for punto in puntos:
+        folium.Marker(location=punto['coordinates'], popup=punto['name']).add_to(mapa)
     
+    # Dibujar la ruta entre los puntos seleccionados
+    if len(puntos) > 1:
+        for i in range(len(puntos) - 1):
+            folium.PolyLine(locations=[puntos[i]['coordinates'], puntos[i + 1]['coordinates']], color='blue', weight=3, opacity=0.7).add_to(mapa)
+
     return mapa
 
-# Ejecutar la optimización
-if st.sidebar.button("Ejecutar Optimización"):
-    ruta, tiempo, consumo, distancia = calcular_ruta_optima(grafo, inicio, destino, velocidad_promedio, consumo_gasolina)
-    st.subheader(f"Ruta más eficiente desde {inicio} hasta {destino}:")
+# Función para dibujar puntos en el mapa
+def add_point(event):
+    coords = event['latlng']
+    puntos.append({'name': f'Punto {len(puntos) + 1}', 'coordinates': [coords[0], coords[1]]})
+
+# Crear el mapa interactivo con folium
+mapa = folium.Map(location=[19.4326, -99.1332], zoom_start=6)
+
+# Habilitar la opción para dibujar puntos en el mapa
+draw = Draw(
+    draw_options={
+        'polyline': False,
+        'polygon': False,
+        'circle': False,
+        'rectangle': False,
+        'marker': True
+    },
+    edit_options={'edit': True}
+)
+draw.add_to(mapa)
+
+# Agregar los puntos y líneas
+if 'puntos' not in st.session_state:
+    st.session_state['puntos'] = []
+
+# Mostrar el mapa interactivo
+mapa_html = mapa._repr_html_()
+components.html(mapa_html, height=600)
+
+# Guardar los puntos y ejecutar la optimización
+if len(st.session_state['puntos']) > 1:
+    ruta, tiempo, consumo, distancia = calcular_ruta_optima(grafo, 'Ciudad A', 'Ciudad B', velocidad_promedio, consumo_gasolina)
+    st.subheader(f"Ruta más eficiente:")
     st.write(f"Ruta: {' -> '.join(ruta)}")
     st.write(f"Distancia total: {distancia} km")
     st.write(f"Tiempo estimado de llegada: {tiempo} horas")
     st.write(f"Consumo total de gasolina: {consumo:.2f} litros")
     
-    mapa_ruta = mostrar_mapa(ruta, coordenadas)
+    mapa_ruta = mostrar_mapa(st.session_state['puntos'], coordenadas)
     mapa_html = mapa_ruta._repr_html_()
     components.html(mapa_html, height=600)
