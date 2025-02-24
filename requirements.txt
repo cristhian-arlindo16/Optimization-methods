@@ -1,11 +1,10 @@
-googlemaps
-
 streamlit
 numpy
 pandas
 matplotlib
 simpy
 deap
+python==3.8
 
 git add .
 git commit -m "Actualización de la app con nuevas funciones"
