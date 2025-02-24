@@ -10,3 +10,4 @@ networkx
 numpy
 streamlit-folium
 geopy.distance
+geopy
