@@ -1,8 +1,8 @@
 import streamlit as st
 import folium
-import networkx as nx
 import streamlit.components.v1 as components
 from folium.plugins import Draw
+import networkx as nx
 
 # Configuración de la página
 st.set_page_config(page_title="Optimización de Rutas y Consumo de Gasolina", page_icon="🚗", layout="wide")
@@ -40,7 +40,7 @@ def calcular_ruta_optima(grafo, inicio, destino, velocidad, consumo_gasolina):
     return ruta, tiempo_total, consumo_total, distancia_total
 
 # Función para mostrar el mapa con la ruta
-def mostrar_mapa(puntos, coordenadas):
+def mostrar_mapa(puntos):
     mapa = folium.Map(location=[19.4326, -99.1332], zoom_start=6)
     
     # Dibujar los puntos en el mapa
@@ -54,10 +54,14 @@ def mostrar_mapa(puntos, coordenadas):
 
     return mapa
 
-# Función para dibujar puntos en el mapa
+# Función para añadir puntos al mapa
 def add_point(event):
     coords = event['latlng']
-    puntos.append({'name': f'Punto {len(puntos) + 1}', 'coordinates': [coords[0], coords[1]]})
+    st.session_state['puntos'].append({'name': f'Punto {len(st.session_state["puntos"]) + 1}', 'coordinates': [coords[0], coords[1]]})
+
+# Inicializar los puntos en la sesión de Streamlit si no existen
+if 'puntos' not in st.session_state:
+    st.session_state['puntos'] = []
 
 # Crear el mapa interactivo con folium
 mapa = folium.Map(location=[19.4326, -99.1332], zoom_start=6)
@@ -76,16 +80,17 @@ draw = Draw(
 draw.add_to(mapa)
 
 # Agregar los puntos y líneas
-if 'puntos' not in st.session_state:
-    st.session_state['puntos'] = []
-
-# Mostrar el mapa interactivo
-mapa_html = mapa._repr_html_()
-components.html(mapa_html, height=600)
+if len(st.session_state['puntos']) > 0:
+    mapa_ruta = mostrar_mapa(st.session_state['puntos'])
+    mapa_html = mapa_ruta._repr_html_()
+    components.html(mapa_html, height=600)
 
 # Agregar un botón para optimizar
 if st.button('Optimizar Ruta'):
-    if len(st.session_state['puntos']) > 1:
+    if len(st.session_state['puntos']) < 2:
+        st.error("Por favor, agregue al menos dos puntos en el mapa para calcular la ruta.")
+    else:
+        # Puedes ajustar esto a la lógica que desees para las ciudades
         ruta, tiempo, consumo, distancia = calcular_ruta_optima(grafo, 'Ciudad A', 'Ciudad B', velocidad_promedio, consumo_gasolina)
         st.subheader(f"Ruta más eficiente:")
         st.write(f"Ruta: {' -> '.join(ruta)}")
@@ -93,8 +98,6 @@ if st.button('Optimizar Ruta'):
         st.write(f"Tiempo estimado de llegada: {tiempo} horas")
         st.write(f"Consumo total de gasolina: {consumo:.2f} litros")
         
-        mapa_ruta = mostrar_mapa(st.session_state['puntos'], coordenadas)
+        mapa_ruta = mostrar_mapa(st.session_state['puntos'])
         mapa_html = mapa_ruta._repr_html_()
         components.html(mapa_html, height=600)
-    else:
-        st.error("Por favor, agregue al menos dos puntos en el mapa para calcular la ruta.")
