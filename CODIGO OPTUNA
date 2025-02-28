@@ -1,0 +1,72 @@
+import optuna
+import matplotlib
+matplotlib.use('Agg')  # Cambiar el backend a 'Agg' para evitar el uso de Tkinter
+import pandas as pd
+import numpy as np
+import sklearn.ensemble
+import sklearn.model_selection
+import matplotlib.pyplot as plt
+
+# 1. Cargar y preparar el dataset
+def load_infractores():
+    """Carga el dataset 'Registro Nacional de Infractores_0.csv' en un formato adecuado para ML"""
+    
+    # Cargar el CSV
+    df = pd.read_csv("Registro Nacional de Infractores_0.csv", sep=None, engine="python", on_bad_lines="skip")
+
+    # Eliminar valores nulos
+    df.dropna(inplace=True)
+
+    # Convertir fechas a años si existe la columna "Fecha Resolución"
+    if "Fecha Resolución" in df.columns:
+        df["Fecha Resolución"] = pd.to_datetime(df["Fecha Resolución"], dayfirst=True, errors='coerce').dt.year
+
+    # Codificar variables categóricas
+    from sklearn.preprocessing import LabelEncoder
+    label_encoders = {}
+    for col in df.select_dtypes(include=["object"]).columns:
+        label_encoders[col] = LabelEncoder()
+        df[col] = label_encoders[col].fit_transform(df[col])
+
+    # Seleccionar solo columnas numéricas
+    df_numeric = df.select_dtypes(include=[np.number])
+
+    # Definir la variable objetivo
+    target_column = "Fecha Resolución" if "Fecha Resolución" in df.columns else None
+    X = df_numeric.drop(columns=[target_column], errors="ignore").values if target_column else df_numeric.values
+    y = df[target_column].values if target_column else None
+
+    return X, y
+
+# 2. Definir la función objetivo para Optuna
+def objective(trial):
+    # Cargar el dataset
+    X, y = load_infractores()
+
+    # Parámetros a optimizar
+    n_estimators = trial.suggest_int("n_estimators", 2, 20)
+    max_depth = int(trial.suggest_float("max_depth", 1, 32, log=True))
+
+    clf = sklearn.ensemble.RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth)
+
+    # Evaluar con validación cruzada
+    return sklearn.model_selection.cross_val_score(clf, X, y, n_jobs=-1, cv=3).mean()
+
+# 3. Ejecutar la optimización
+study = optuna.create_study(direction="maximize")
+study.optimize(objective, n_trials=100)
+
+# 4. Mostrar los mejores resultados
+trial = study.best_trial
+
+print("Mejor Precisión:", trial.value)
+print("Mejores Hiperparámetros:", trial.params)
+
+# 5. Generar gráfico de la evolución de la optimización
+fig = optuna.visualization.matplotlib.plot_optimization_history(study)
+
+# Guardar el gráfico como imagen
+fig.figure.savefig("optuna_resultados.png")
+
+# 6. Cerrar la figura correctamente
+plt.close(fig.figure)  # Cerramos la figura asociada
