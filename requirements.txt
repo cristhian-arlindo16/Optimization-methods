@@ -10,4 +10,4 @@ networkx
 numpy
 streamlit-folium
 geopy
-plotl
+plotly
